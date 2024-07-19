@@ -1,8 +1,8 @@
-#include <src/library/getopt/modchooser.h>
-
-#include <src/library/testing/unittest/registar.h>
+#include "modchooser.h"
 
 #include <ydb-cpp-sdk/util/stream/str.h>
+
+#include <src/library/testing/unittest/registar.h>
 
 void ValidateArgcArgv(int argc, const char** argv) {
     UNIT_ASSERT_EQUAL(argc, 1);
@@ -34,7 +34,7 @@ int Five(int argc, const char** argv) {
     return 5;
 }
 
-typedef int (*F_PTR)(int, const char**);
+using F_PTR = int (*)(int, const char**);
 static const F_PTR FUNCTIONS[] = {One, Two, Three, Four, Five};
 static const char* NAMES[] = {"one", "two", "three", "four", "five"};
 static_assert(Y_ARRAY_SIZE(FUNCTIONS) == Y_ARRAY_SIZE(NAMES), "Incorrect input tests data");

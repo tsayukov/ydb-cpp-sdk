@@ -1,71 +1,73 @@
-#include <src/library/testing/unittest/registar.h>
+#include "wrap.h"
 
-#include <src/library/getopt/small/wrap.h>
+#include <ydb-cpp-sdk/util/string/escape.h>
+
+#include <src/library/testing/unittest/registar.h>
 
 Y_UNIT_TEST_SUITE(Wrap) {
     Y_UNIT_TEST(TestWrapping) {
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b c d eeffeff").Quote(),
-            std::string("a b c\nd\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b c d eeffeff")),
+            NUtils::Quote(std::string("a b c\nd\neeffeff"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\nc d\neeffeff").Quote(),
-            std::string("a b\nc d\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\nc d\neeffeff")),
+            NUtils::Quote(std::string("a b\nc d\neeffeff"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\n     c d\neeffeff").Quote(),
-            std::string("a b\n     c\nd\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\n     c d\neeffeff")),
+            NUtils::Quote(std::string("a b\n     c\nd\neeffeff"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\nx     c d\neeffeff").Quote(),
-            std::string("a b\nx\nc d\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\nx     c d\neeffeff")),
+            NUtils::Quote(std::string("a b\nx\nc d\neeffeff"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\nx  \n   c d\neeffeff").Quote(),
-            std::string("a b\nx\n   c\nd\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\nx  \n   c d\neeffeff")),
+            NUtils::Quote(std::string("a b\nx\n   c\nd\neeffeff"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\nx      \n   c d\neeffeff").Quote(),
-            std::string("a b\nx\n   c\nd\neeffeff").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\nx      \n   c d\neeffeff")),
+            NUtils::Quote(std::string("a b\nx\n   c\nd\neeffeff"))
         );
     }
 
     Y_UNIT_TEST(TestWrappingIndent) {
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b c d", "|>").Quote(),
-            std::string("a b\n|>c d").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b c d", "|>")),
+            NUtils::Quote(std::string("a b\n|>c d"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b\n\nc d", "|>").Quote(),
-            std::string("a b\n|>\n|>c d").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b\n\nc d", "|>")),
+            NUtils::Quote(std::string("a b\n|>\n|>c d"))
         );
     }
 
     Y_UNIT_TEST(TestWrappingAnsi) {
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5m").Quote(),
-            std::string("\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5m").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5m")),
+            NUtils::Quote(std::string("\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5mx\033[1;2;3;4;5m"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a \033[1;2;3;4;5mb c\033[1;2;3;4;5m \033[1;2;3;4;5md e f").Quote(),
-            std::string("a \033[1;2;3;4;5mb c\033[1;2;3;4;5m\n\033[1;2;3;4;5md e f").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a \033[1;2;3;4;5mb c\033[1;2;3;4;5m \033[1;2;3;4;5md e f")),
+            NUtils::Quote(std::string("a \033[1;2;3;4;5mb c\033[1;2;3;4;5m\n\033[1;2;3;4;5md e f"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b  \033[1;2;3;4;5m  c d").Quote(),
-            std::string("a b  \033[1;2;3;4;5m\nc d").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b  \033[1;2;3;4;5m  c d")),
+            NUtils::Quote(std::string("a b  \033[1;2;3;4;5m\nc d"))
         );
 
         UNIT_ASSERT_STRINGS_EQUAL(
-            NLastGetopt::Wrap(5, "a b       \033[1;2;3;4;5m  c d").Quote(),
-            std::string("a b\n\033[1;2;3;4;5m  c d").Quote()
+            NUtils::Quote(NLastGetopt::Wrap(5, "a b       \033[1;2;3;4;5m  c d")),
+            NUtils::Quote(std::string("a b\n\033[1;2;3;4;5m  c d"))
         );
     }
 

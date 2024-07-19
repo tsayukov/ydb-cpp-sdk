@@ -1,10 +1,11 @@
-#include <src/library/getopt/last_getopt.h>
+#include "last_getopt.h"
+
+#include <ydb-cpp-sdk/util/generic/array_size.h>
+#include <ydb-cpp-sdk/util/string/subst.h>
 
 #include <src/library/colorizer/colors.h>
 #include <src/library/testing/unittest/registar.h>
 
-#include <ydb-cpp-sdk/util/generic/array_size.h>
-#include <ydb-cpp-sdk/util/string/subst.h>
 #include <src/util/string/vector.h>
 #include <src/util/string/split.h>
 
@@ -25,7 +26,7 @@ namespace {
         TOptsParseResultTestWrapper(const TOpts* opts, std::vector<const char*> argv)
             : Argv_(argv)
         {
-            Init(opts, (int)Argv_.size(), Argv_.data());
+            Init(opts, static_cast<int>(Argv_.size()), Argv_.data());
         }
     };
 
@@ -39,8 +40,9 @@ struct TOptsParserTester {
     THolder<TOptsParser> Parser_;
 
     void Initialize() {
-        if (!Parser_)
-            Parser_.Reset(new TOptsParser(&Opts_, (int)Argv_.size(), Argv_.data()));
+        if (!Parser_) {
+            Parser_.Reset(new TOptsParser(&Opts_, static_cast<int>(Argv_.size()), Argv_.data()));
+        }
     }
 
     void Accept() {
@@ -464,8 +466,8 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
         TOptsParseResultTestWrapper r(&opts, V({"cmd", "--data=jjhh", "-n", "11", "--optional-number-1=8", "--optional-string-1=os1"}));
         UNIT_ASSERT_VALUES_EQUAL("jjhh", data);
         UNIT_ASSERT_VALUES_EQUAL(11, number);
-        UNIT_ASSERT(!optionalString0.Defined());
-        UNIT_ASSERT(!optionalNumber0.Defined());
+        UNIT_ASSERT(!optionalString0.has_value());
+        UNIT_ASSERT(!optionalNumber0.has_value());
         UNIT_ASSERT_VALUES_EQUAL(*optionalString1, "os1");
         UNIT_ASSERT_VALUES_EQUAL(*optionalNumber1, 8);
     }
@@ -595,8 +597,8 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
             double fval = 0.0;
             opts.AddLongOption("flag1").RequiredArgument().StoreResult(&uval);
             opts.AddLongOption("flag2").RequiredArgument().StoreResultT<int>(&uval);
-            opts.AddLongOption("flag3").RequiredArgument().StoreMappedResult(&fval, (double (*)(double))fabs);
-            opts.AddLongOption("flag4").RequiredArgument().StoreMappedResult(&fval, (double (*)(double))sqrt);
+            opts.AddLongOption("flag3").RequiredArgument().StoreMappedResult(&fval, static_cast<double (*)(double)>(fabs));
+            opts.AddLongOption("flag4").RequiredArgument().StoreMappedResult(&fval, static_cast<double (*)(double)>(sqrt));
             UNIT_ASSERT_EXCEPTION(
                 TOptsParseResultTestWrapper(&opts, V({"cmd", "--flag3", "-2.0", "--flag1", "-1"})),
                 yexception);
@@ -611,17 +613,17 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
     Y_UNIT_TEST(TestTitleAndPrintUsage) {
         TOpts opts;
         const char* prog = "my_program";
-        std::string title = std::string("Sample ") + std::string(prog).Quote() + " application";
+        std::string title = std::string("Sample ") + NUtils::Quote(std::string(prog)) + " application";
         opts.SetTitle(title);
         int argc = 2;
         const char* cmd[] = {prog};
         TOptsParser parser(&opts, argc, cmd);
-        std::stringStream out;
+        std::ostringstream out;
         parser.PrintUsage(out);
         // find title
-        UNIT_ASSERT(out.Str().find(title) != std::string::npos);
+        UNIT_ASSERT(out.view().find(title) != std::string_view::npos);
         // find usage
-        UNIT_ASSERT(out.Str().find(" " + std::string(prog) + " ") != std::string::npos);
+        UNIT_ASSERT(out.view().find(" " + std::string(prog) + " ") != std::string_view::npos);
     }
 
     Y_UNIT_TEST(TestCustomCmdLineDescr) {
@@ -632,10 +634,10 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
         const char* cmd[] = {prog};
         opts.SetCmdLineDescr(customDescr);
         TOptsParser parser(&opts, argc, cmd);
-        std::stringStream out;
+        std::ostringstream out;
         parser.PrintUsage(out);
         // find custom usage
-        UNIT_ASSERT(out.Str().find(customDescr) != std::string::npos);
+        UNIT_ASSERT(out.view().find(customDescr) != std::string_view::npos);
     }
 
     Y_UNIT_TEST(TestColorPrint) {
@@ -651,45 +653,45 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
         opts.AddSection("Section", "Section\n  text");
         const char* cmd[] = {prog};
         TOptsParser parser(&opts, Y_ARRAY_SIZE(cmd), cmd);
-        std::stringStream out;
+        std::ostringstream out;
         NColorizer::TColors colors(true);
         parser.PrintUsage(out, colors);
 
         // find options and green color
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "--long_option" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "--other" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "-o" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "-d" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "-s" << colors.OldColor()) != std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "--long_option" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "--other" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "-o" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "-d" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "-s" << colors.OldColor()) != std::string_view::npos);
 
         // find default values
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.CyanColor() << "42" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.CyanColor() << "\"str_default\"" << colors.OldColor()) != std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.CyanColor() << "42" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.CyanColor() << "\"str_default\"" << colors.OldColor()) != std::string_view::npos);
 
         // find free args
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "123" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "456" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "first_free_arg" << colors.OldColor()) != std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "123" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "456" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "first_free_arg" << colors.OldColor()) != std::string_view::npos);
         // free args without help not rendered even if they have custom title
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.GreenColor() << "second_free_arg" << colors.OldColor()) == std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.GreenColor() << "second_free_arg" << colors.OldColor()) == std::string_view::npos);
 
         // find signatures
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.BoldColor() << "Usage" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.BoldColor() << "Required parameters" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.BoldColor() << "Optional parameters" << colors.OldColor()) != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.BoldColor() << "Free args" << colors.OldColor()) != std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.BoldColor() << "Usage" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.BoldColor() << "Required parameters" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.BoldColor() << "Optional parameters" << colors.OldColor()) != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.BoldColor() << "Free args" << colors.OldColor()) != std::string_view::npos);
 
         // find sections
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << colors.BoldColor() << "Section" << colors.OldColor() << ":") != std::string::npos);
-        UNIT_ASSERT(out.Str().find(TYdbStringBuilder() << "  Section\n    text") != std::string::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << colors.BoldColor() << "Section" << colors.OldColor() << ":") != std::string_view::npos);
+        UNIT_ASSERT(out.view().find(TStringBuilder() << "  Section\n    text") != std::string_view::npos);
 
         // print without colors
-        std::stringStream out2;
+        std::ostringstream out2;
         opts.PrintUsage(prog, out2);
-        UNIT_ASSERT(out2.Str().find(colors.GreenColor()) == std::string::npos);
-        UNIT_ASSERT(out2.Str().find(colors.CyanColor()) == std::string::npos);
-        UNIT_ASSERT(out2.Str().find(colors.BoldColor()) == std::string::npos);
-        UNIT_ASSERT(out2.Str().find(colors.OldColor()) == std::string::npos);
+        UNIT_ASSERT(out2.view().find(colors.GreenColor()) == std::string_view::npos);
+        UNIT_ASSERT(out2.view().find(colors.CyanColor()) == std::string_view::npos);
+        UNIT_ASSERT(out2.view().find(colors.BoldColor()) == std::string_view::npos);
+        UNIT_ASSERT(out2.view().find(colors.OldColor()) == std::string_view::npos);
     }
 
     Y_UNIT_TEST(TestPadding) {
@@ -705,17 +707,17 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
             const char* cmd[] = {prog};
             TOptsParser parser(&opts, Y_ARRAY_SIZE(cmd), cmd);
 
-            std::stringStream out;
+            std::ostringstream out;
             NColorizer::TColors colors(withColors);
             parser.PrintUsage(out, colors);
 
-            std::string printed = out.Str();
+            std::string printed = out.str();
             if (withColors) {
                 // remove not printable characters
-                SubstGlobal(printed, std::string(colors.BoldColor()), "");
-                SubstGlobal(printed, std::string(colors.GreenColor()), "");
-                SubstGlobal(printed, std::string(colors.CyanColor()), "");
-                SubstGlobal(printed, std::string(colors.OldColor()), "");
+                SubstGlobal(printed, colors.BoldColor(), "");
+                SubstGlobal(printed, colors.GreenColor(), "");
+                SubstGlobal(printed, colors.CyanColor(), "");
+                SubstGlobal(printed, colors.OldColor(), "");
             }
             std::vector<std::string> lines;
             StringSplitter(printed).Split('\n').SkipEmpty().Collect(&lines);
@@ -723,8 +725,9 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
             std::vector<size_t> indents;
             for (const std::string& line : lines) {
                 const size_t indent = line.find("description ");
-                if (indent != std::string::npos)
+                if (indent != std::string::npos) {
                     indents.push_back(indent);
+                }
             }
             UNIT_ASSERT_VALUES_EQUAL(indents.size(), 7);
             const size_t theOnlyIndent = indents[0];
@@ -767,7 +770,7 @@ Y_UNIT_TEST_SUITE(TLastGetoptTests) {
     }
 
     Y_UNIT_TEST(TestKVHandler) {
-        TYdbStringBuilder keyvals;
+        TStringBuilder keyvals;
 
         TOptsNoDefault opts;
         opts.AddLongOption("set").KVHandler([&keyvals](std::string k, std::string v) { keyvals << k << ":" << v << ","; });

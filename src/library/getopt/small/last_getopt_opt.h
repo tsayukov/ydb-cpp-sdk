@@ -733,17 +733,17 @@ namespace NLastGetopt {
 
         template <class Container>
         TOpt& SplitHandler(Container* target, const char delim) {
-            return Handler(new NLastGetopt::TOptSplitHandler<Container>(target, delim));
+            return Handler(std::make_unique<NLastGetopt::TOptSplitHandler<Container>>(target, delim));
         }
 
         template <class Container>
         TOpt& RangeSplitHandler(Container* target, const char elementsDelim, const char rangesDelim) {
-            return Handler(new NLastGetopt::TOptRangeSplitHandler<Container>(target, elementsDelim, rangesDelim));
+            return Handler(std::make_unique<NLastGetopt::TOptRangeSplitHandler<Container>>(target, elementsDelim, rangesDelim));
         }
 
         template <class TpFunc>
         TOpt& KVHandler(TpFunc func, const char kvdelim = '=') {
-            return Handler(new NLastGetopt::TOptKVHandler<TpFunc>(func, kvdelim));
+            return Handler(std::make_unique<NLastGetopt::TOptKVHandler<TpFunc>>(func, kvdelim));
         }
 
         template <typename TIterator>

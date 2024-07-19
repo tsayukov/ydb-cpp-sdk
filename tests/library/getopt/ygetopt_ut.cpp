@@ -1,4 +1,4 @@
-#include <src/library/getopt/ygetopt.h>
+#include "ygetopt.h"
 
 #include <src/library/testing/unittest/registar.h>
 
